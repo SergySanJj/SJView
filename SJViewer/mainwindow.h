@@ -10,6 +10,8 @@
 #include <QStack>
 #include <QStringList>
 #include <QStringListModel>
+#include <QTimer>
+#include <QTime>
 
 
 namespace Ui {
@@ -32,6 +34,7 @@ private:
     QGraphicsPixmapItem *currentImage;
     QStringList watchHistory;
     QStringListModel *listModel;
+    QTimer *timer;
 
     QString lastDir(const QString &path);
 
@@ -50,6 +53,9 @@ private slots:
     void showRandomImage();
     void showPreviousImage();
     void keyBind(QKeyEvent *event);
+
+    void stopTimer();
+    void timerTick();
 signals:
     void keyPressEvent(QKeyEvent *event);
 };

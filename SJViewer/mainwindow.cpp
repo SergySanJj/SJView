@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
    imageView = new QGraphicsView(imageScene);
    currentImage = new QGraphicsPixmapItem();
 
+   timer = new QTimer();
+
    imageScene->addItem(currentImage);
    ui->ImageLayout->addWidget(imageView);
    imageView->setMinimumWidth(imageView->maximumWidth());
@@ -49,6 +51,10 @@ MainWindow::MainWindow(QWidget *parent) :
    connect(ui->randomButton,SIGNAL(clicked()),this,SLOT(showRandomImage()));
 
    connect(this,SIGNAL(keyPressEvent(QKeyEvent *)),this,SLOT(keyBind(QKeyEvent *)));
+
+   connect(timer,SIGNAL(timeout()),this,SLOT(showRandomImage()));
+   connect(ui->slideshowButton,SIGNAL(clicked()),this,SLOT(timerTick()));
+   connect(ui->stopButton,SIGNAL(clicked()),this,SLOT(stopTimer()));
 
    srand(time(NULL));
 }
@@ -165,7 +171,7 @@ void MainWindow::renameSlot()
 void MainWindow::updateFilesList()
 {
     auto dirName = ui->selectedDir->text();
-    allFiles.empty();
+    allFiles = {};
 
     if (dirName.isEmpty())
         return;
@@ -210,4 +216,25 @@ void MainWindow::keyBind(QKeyEvent *event)
         showRandomImage();
     else if (event->key() == Qt::Key_A || event->key() == Qt::Key_Left)
         showPreviousImage();
+    else if (event->key() == Qt::Key_S)
+        stopTimer();
+    else if (event->key() == Qt::Key_W)
+        timerTick();
+}
+
+void MainWindow::stopTimer()
+{
+    timer->stop();
+}
+
+void MainWindow::timerTick()
+{
+    int t;
+    if (ui->timeInterval->text().isEmpty())
+        t = 1000;
+    else
+        t = ui->timeInterval->text().toInt();
+
+    timer->start(t);
+
 }
