@@ -35,6 +35,7 @@ private:
     QStringList watchHistory;
     QStringListModel *listModel;
     QTimer *timer;
+    int currItem;
 
     QString lastDir(const QString &path);
 
@@ -53,6 +54,7 @@ private slots:
     void showRandomImage();
     void showPreviousImage();
     void keyBind(QKeyEvent *event);
+    void currentChanged( const QModelIndex & current);
 
     void stopTimer();
     void timerTick();

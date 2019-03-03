@@ -32,6 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
    imageScene->addItem(currentImage);
    ui->ImageLayout->addWidget(imageView);
+   ui->timeInterval->setText("1000");
+   ui->updateBox->setCheckState(Qt::CheckState::Checked);
    imageView->setMinimumWidth(imageView->maximumWidth());
    imageView->setMinimumHeight(imageView->maximumHeight());
 
@@ -55,6 +57,9 @@ MainWindow::MainWindow(QWidget *parent) :
    connect(timer,SIGNAL(timeout()),this,SLOT(showRandomImage()));
    connect(ui->slideshowButton,SIGNAL(clicked()),this,SLOT(timerTick()));
    connect(ui->stopButton,SIGNAL(clicked()),this,SLOT(stopTimer()));
+
+   connect(ui->stackView, SIGNAL(clicked(QModelIndex)),this,SLOT(currentChanged(QModelIndex)));
+   currItem = -1;
 
    srand(time(NULL));
 }
@@ -149,6 +154,8 @@ void MainWindow::selectDirSlot()
                                                         QFileDialog::ShowDirsOnly
                                                         | QFileDialog::DontResolveSymlinks);
     ui->selectedDir->setText(dirName);
+    if (ui->updateBox->checkState() == Qt::CheckState::Checked)
+        updateFilesList();
 }
 
 void MainWindow::renameSlot()
@@ -189,25 +196,36 @@ void MainWindow::showRandomImage()
     if (allFiles.isEmpty())
         return;
 
-    auto imgId = rand()%allFiles.size();
-    int tryCount =0;
-    while (QImage(allFiles[imgId]).isNull() && tryCount < 10)
-    {
-        imgId = rand()%allFiles.size();
+    if (currItem <= 0){
+        currItem = 0;
+        auto imgId = rand()%allFiles.size();
+        int tryCount =0;
+        while (QImage(allFiles[imgId]).isNull() && tryCount < 10)
+        {
+            imgId = rand()%allFiles.size();
+        }
+        if (tryCount>=10)
+            return;
+        watchHistory.push_front(allFiles[imgId]);
     }
-    if (tryCount>=10)
-        return;
-    watchHistory.push_front(allFiles[imgId]);
-    showImage(watchHistory.first());
+    else if(currItem>0)
+        currItem--;
+    else
+        showImage(":/EmptyImage.png");
+
+    showImage(watchHistory[currItem]);
+    ui->stackView->setCurrentIndex(QModelIndex(listModel->index(currItem)));
 }
 
 void MainWindow::showPreviousImage()
 {
     if (watchHistory.size()<=1)
         return;
-    watchHistory.pop_front();
-    auto s = watchHistory.first();
+    if (currItem+1 < watchHistory.size())
+        currItem++;
+    auto s = watchHistory[currItem];
     showImage(s);
+    ui->stackView->setCurrentIndex(QModelIndex(listModel->index(currItem)));
 }
 
 void MainWindow::keyBind(QKeyEvent *event)
@@ -220,6 +238,13 @@ void MainWindow::keyBind(QKeyEvent *event)
         stopTimer();
     else if (event->key() == Qt::Key_W)
         timerTick();
+}
+
+void MainWindow::currentChanged(const QModelIndex &current)
+{
+    currItem = current.row();
+    showImage(watchHistory[currItem]);
+    ui->stackView->setCurrentIndex(QModelIndex(listModel->index(currItem)));
 }
 
 void MainWindow::stopTimer()
